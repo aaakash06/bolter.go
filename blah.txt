@@ -1,0 +1,76 @@
+// // Item represents the data structure for our API
+// type Item struct {
+// 	ID    string `json:"id"`
+// 	Name  string `json:"name"`
+// 	Price int    `json:"price"`
+// }
+
+// // In-memory store (replace with a database in a real app)
+// var items []Item
+
+// // Get all items
+// func getItems(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	json.NewEncoder(w).Encode(items)
+// }
+
+// // Get a single item by ID
+// func getItem(w http.ResponseWriter, r *http.Request) {
+// 	responseObject := *r
+// 	fmt.Println(responseObject)
+// 	w.Header().Set("Content-Type", "text")
+// 	params := mux.Vars(r) // Get URL parameters
+// 	for _, item := range items {
+// 		if item.ID == params["id"] {
+// 			json.NewEncoder(w).Encode(item)
+// 			return
+// 		}
+// 	}
+// 	http.Error(w, "Item not found", http.StatusNotFound)
+// }
+
+// // Create a new item
+// func createItem(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	var item Item
+// 	err := json.NewDecoder(r.Body).Decode(&item)
+// 	if err != nil {
+// 		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+// 		return
+// 	}
+// 	items = append(items, item)
+// 	json.NewEncoder(w).Encode(item)
+// }
+
+// // Delete an item by ID
+// func deleteItem(w http.ResponseWriter, r *http.Request) {
+// 	w.Header().Set("Content-Type", "application/json")
+// 	params := mux.Vars(r)
+// 	for i, item := range items {
+// 		if item.ID == params["id"] {
+// 			items = append(items[:i], items[i+1:]...)
+// 			w.Write([]byte(`{"message": "Item deleted"}`))
+// 			return
+// 		}
+// 	}
+// 	http.Error(w, "Item not found", http.StatusNotFound)
+// }
+
+// // Main function to set up routes and start server
+// func main() {
+// 	// Initialize some sample data
+// 	items = append(items, Item{ID: "1", Name: "Apple", Price: 100})
+
+// 	// Set up router
+// 	router := mux.NewRouter()
+
+// 	// Define endpoints
+// 	router.HandleFunc("/items", getItems).Methods("GET")
+// 	router.HandleFunc("/items/{id}", getItem).Methods("GET")
+// 	router.HandleFunc("/items", createItem).Methods("POST")
+// 	router.HandleFunc("/items/{id}", deleteItem).Methods("DELETE")
+
+// 	// Start server
+// 	log.Println("Server starting on port 8080...")
+// 	log.Fatal(http.ListenAndServe(":8080", router))
+// }
