@@ -57,7 +57,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Add headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("OPEN_API_KEY"))
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_API_KEY"))
 	// Optional OpenRouter specific headers
 	req.Header.Set("HTTP-Referer", "https://your-site.com") // Optional: your site URL
 	req.Header.Set("X-Title", "My Application")             // Optional: your app name
