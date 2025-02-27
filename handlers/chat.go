@@ -1,14 +1,15 @@
-package utils
+package handlers
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	"github.com/openai/openai-go"
 	"github.com/openai/openai-go/option"
 )
 
-func Chat() {
+func Chat(w http.ResponseWriter, r *http.Request) {
 	client := openai.NewClient(
 		option.WithBaseURL("https://openrouter.ai/api/v1"),
 		option.WithAPIKey(os.Getenv("OPEN_API_KEY")), // defaults to os.LookupEnv("OPENAI_API_KEY")
