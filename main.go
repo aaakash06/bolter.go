@@ -1,22 +1,29 @@
 package main
 
 import (
+	"bolter/handlers"
+	"bolter/middleware"
+
+	// "bolter/utils"
 	"log"
 	"net/http"
 	"time"
-
-	"bolter/handlers"
-	"bolter/middleware"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load()
+	println("starting...")
+	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatalf("Error loading .env file")
 	}
+
+	// utils.Chat()
+	// getting env variables
+	// key := os.Getenv("OPENAI_API_KEY")
+	// fmt.Printf("godotenv : %s = %s \n", "KEY", key)
 	r := mux.NewRouter()
 
 	// Initialize routes
@@ -27,6 +34,7 @@ func main() {
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
+
 }
 
 func initializeRoutes(r *mux.Router) {

@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"context"
@@ -8,19 +8,21 @@ import (
 	"github.com/openai/openai-go/option"
 )
 
-func chat() {
+func Chat() {
 	client := openai.NewClient(
 		option.WithBaseURL("https://openrouter.ai/api/v1"),
 		option.WithAPIKey(os.Getenv("OPEN_API_KEY")), // defaults to os.LookupEnv("OPENAI_API_KEY")
 	)
+
 	chatCompletion, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
 		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage("Say this is a test"),
+			openai.UserMessage("What is 2+2?"),
 		}),
-		Model: openai.F(openai.ChatModelGPT4o),
+		Model: openai.F("deepseek/deepseek-r1:free"),
 	})
 	if err != nil {
 		panic(err.Error())
 	}
-	println(chatCompletion.Choices[0].Message.Content)
+	res := chatCompletion.Choices[0].Message.Content
+	println(res)
 }

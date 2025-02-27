@@ -7,7 +7,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func template(w http.ResponseWriter, r *http.Request) {
+func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	fmt.Println(params["templateId"])
 	w.Header().Set("Content-Type", "application/json")
