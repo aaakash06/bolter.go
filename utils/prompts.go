@@ -18,6 +18,7 @@ func GetSystemPrompt(cwd string) string {
 	if cwd == "" {
 		cwd = WORK_DIR
 	}
+
 	allowedElementsStr := strings.Join(
 		Map(AllowedHTMLElements, func(tag string) string {
 			return fmt.Sprintf("<%s>", tag)
@@ -193,3 +194,5 @@ func Map[T, U any](slice []T, transform func(T) U) []U {
 
 const ContinuePrompt = `Continue your prior response. IMPORTANT: Immediately begin from where you left off without any interruptions.
 Do not repeat any content, including artifact and action tags.`
+
+const NodeBasePrompt = "<boltArtifact id=\"project-import\" title=\"Project Files\"><boltAction type=\"file\" filePath=\"index.js\">// run 'node index.js' in the terminal\n\nconsole.log(`Hello Node.js v${process.versions.node}!`);\n</boltAction><boltAction type=\"file\" filePath=\"package.json\">{\n  \"name\": \"node-starter\",\n  \"private\": true,\n  \"scripts\": {\n    \"test\": \"echo \\\"Error: no test specified\\\" && exit 1\"\n  }\n}\n</boltAction></boltArtifact>"
