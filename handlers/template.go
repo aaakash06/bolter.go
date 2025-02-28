@@ -19,8 +19,8 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Create messages
 	messages := []utils.Message{
-		// utils.SystemMessage("You are a helpful assistant."),
-		utils.UserMessage("Return either node or react based on what do you think this project should be. Only return a single word either 'node' or 'react'. Do not return anything extra."),
+		utils.SystemMessage("Return either node or react based on what do you think this project should be. Only return a single word either 'node' or 'react'. Do not return anything extra."),
+		utils.UserMessage("create me a beautiful todo app"),
 	}
 
 	// Call the API
