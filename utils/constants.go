@@ -1,10 +1,10 @@
 package utils
 
-var WORK_DIR_NAME string = "project"
-var WORK_DIR string = `/home/` + WORK_DIR_NAME
-var MODIFICATIONS_TAG_NAME string = "bolt_file_modifications"
+const WORK_DIR_NAME string = "project"
+const WORK_DIR string = `/home/` + WORK_DIR_NAME
+const MODIFICATIONS_TAG_NAME string = "bolt_file_modifications"
 
-var allowedHTMLElements []string = []string{
+var AllowedHTMLElements []string = []string{
 	"a",
 	"b",
 	"blockquote",
