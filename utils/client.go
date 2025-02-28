@@ -66,11 +66,11 @@ var (
 func GetOpenRouterClient() *OpenRouterClient {
 	once.Do(func() {
 		instance = &OpenRouterClient{
-			apiKey:     os.Getenv("OPEN_API_KEY"),
+			apiKey:     os.Getenv("OPENAI_API_KEY"),
 			baseURL:    "https://openrouter.ai/api/v1",
 			httpClient: &http.Client{},
-			referer:    "https://your-site.com", // Change to your site
-			appTitle:   "My Application",        // Change to your app name
+			// referer:    "https://your-site.com", // Change to your site
+			appTitle: "Bolter", // Change to your app name
 		}
 	})
 	return instance
@@ -101,7 +101,7 @@ func (c *OpenRouterClient) createRequest(method, endpoint string, body []byte) (
 	// Set headers
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	req.Header.Set("HTTP-Referer", c.referer)
+	// req.Header.Set("HTTP-Referer", c.referer)
 	req.Header.Set("X-Title", c.appTitle)
 
 	return req, nil

@@ -1,107 +1,112 @@
 package handlers
 
 import (
-	"bytes"
+	"bolter/utils"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 )
 
-// Request structure for OpenRouter API
-type OpenRouterRequest struct {
-	Model    string    `json:"model"`
-	Messages []Message `json:"messages"`
-}
-
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-// Response structure for OpenRouter API
-type OpenRouterResponse struct {
-	Choices []struct {
-		Message struct {
-			Content string `json:"content"`
-		} `json:"message"`
-	} `json:"choices"`
+// Response is a simple structure for JSON responses
+type Response struct {
+	Message string `json:"message"`
+	Error   string `json:"error,omitempty"`
 }
 
 func TemplateHandler(w http.ResponseWriter, r *http.Request) {
-	// Create request body
-	requestBody := OpenRouterRequest{
-		Model: "meta-llama/llama-3.1-8b-instruct:free",
-		Messages: []Message{
-			{
-				Role:    "user",
-				Content: "what is 2+3",
-			},
-		},
+	// Get the singleton client
+	client := utils.GetOpenRouterClient()
+
+	// Create messages
+	messages := []utils.Message{
+		// utils.SystemMessage("You are a helpful assistant."),
+		utils.UserMessage("Return either node or react based on what do you think this project should be. Only return a single word either 'node' or 'react'. Do not return anything extra."),
 	}
 
-	// Convert request to JSON
-	requestJSON, err := json.Marshal(requestBody)
+	// Call the API
+	resp, err := client.ChatCompletion("meta-llama/llama-3.1-8b-instruct:free", messages)
 	if err != nil {
-		http.Error(w, "Failed to marshal request: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Create HTTP request
-	req, err := http.NewRequest("POST", "https://openrouter.ai/api/v1/chat/completions", bytes.NewBuffer(requestJSON))
-	if err != nil {
-		http.Error(w, "Failed to create request: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Add headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+os.Getenv("OPENAI_API_KEY"))
-	// Optional OpenRouter specific headers
-	req.Header.Set("HTTP-Referer", "https://your-site.com") // Optional: your site URL
-	req.Header.Set("X-Title", "My Application")             // Optional: your app name
-
-	// Send the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		http.Error(w, "Failed to send request: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		http.Error(w, "Failed to read response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Check status code
-	if resp.StatusCode != http.StatusOK {
-		http.Error(w, fmt.Sprintf("API error (status %d): %s", resp.StatusCode, string(respBody)), http.StatusInternalServerError)
-		return
-	}
-
-	// Parse the response
-	var openRouterResp OpenRouterResponse
-	err = json.Unmarshal(respBody, &openRouterResp)
-	if err != nil {
-		http.Error(w, "Failed to parse response: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Get the response content
-	if len(openRouterResp.Choices) > 0 {
-		content := openRouterResp.Choices[0].Message.Content
-		fmt.Println("Response:", content)
-
-		// Return the response to the client
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		json.NewEncoder(w).Encode(map[string]string{"message": content})
-	} else {
-		http.Error(w, "No response choices returned", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(Response{
+			Error: err.Error(),
+		})
+		return
 	}
+
+	// Return the response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if len(resp.Choices) > 0 {
+		json.NewEncoder(w).Encode(Response{
+			Message: resp.Choices[0].Message.Content,
+		})
+	} else {
+		json.NewEncoder(w).Encode(Response{
+			Error: "No response choices returned",
+		})
+	}
+}
+
+// StreamingHandler handles streaming chat completions
+func StreamingHandler(w http.ResponseWriter, r *http.Request) {
+	// Set headers for streaming
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Ensure we can flush
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+		return
+	}
+
+	// Get the singleton client
+	client := utils.GetOpenRouterClient()
+
+	// Create messages
+	messages := []utils.Message{
+		utils.SystemMessage("You are a helpful assistant."),
+		utils.UserMessage("Explain quantum computing in simple terms."),
+	}
+
+	// Stream handler function
+	streamHandler := func(content string, finishReason *string) error {
+		// Send the content
+		if content != "" {
+			data, _ := json.Marshal(map[string]string{"content": content})
+			_, err := fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Handle finish reason
+		if finishReason != nil {
+			data, _ := json.Marshal(map[string]string{"finish_reason": *finishReason})
+			_, err := fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				return err
+			}
+		}
+
+		flusher.Flush()
+		return nil
+	}
+
+	// Stream the response
+	err := client.StreamChatCompletion("meta-llama/llama-3.1-8b-instruct:free", messages, streamHandler)
+	if err != nil {
+		// Send error as an event
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		fmt.Fprintf(w, "data: %s\n\n", errData)
+		flusher.Flush()
+	}
+
+	// Send DONE event
+	fmt.Fprint(w, "data: [DONE]\n\n")
+	flusher.Flush()
 }
