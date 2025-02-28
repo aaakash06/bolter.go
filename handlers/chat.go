@@ -1,29 +1,70 @@
 package handlers
 
 import (
-	"context"
+	"bolter/utils"
+	"encoding/json"
+	"fmt"
 	"net/http"
-	"os"
-
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
 )
 
+// StreamingHandler handles streaming chat completions
 func Chat(w http.ResponseWriter, r *http.Request) {
-	client := openai.NewClient(
-		option.WithBaseURL("https://openrouter.ai/api/v1"),
-		option.WithAPIKey(os.Getenv("OPEN_API_KEY")), // defaults to os.LookupEnv("OPENAI_API_KEY")
-	)
+	// Set headers for streaming
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
-	chatCompletion, err := client.Chat.Completions.New(context.TODO(), openai.ChatCompletionNewParams{
-		Messages: openai.F([]openai.ChatCompletionMessageParamUnion{
-			openai.UserMessage("What is 2+2?"),
-		}),
-		Model: openai.F("deepseek/deepseek-r1:free"),
-	})
-	if err != nil {
-		panic(err.Error())
+	// Ensure we can flush
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming not supported", http.StatusInternalServerError)
+		return
 	}
-	res := chatCompletion.Choices[0].Message.Content
-	println(res)
+
+	// Get the singleton client
+	client := utils.GetOpenRouterClient()
+
+	// Create messages
+	messages := []utils.Message{
+		utils.SystemMessage("You are a helpful assistant."),
+		utils.UserMessage("Explain quantum computing in simple terms."),
+	}
+
+	// Stream handler function
+	streamHandler := func(content string, finishReason *string) error {
+		// Send the content
+		if content != "" {
+			data, _ := json.Marshal(map[string]string{"content": content})
+			_, err := fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				return err
+			}
+		}
+
+		// Handle finish reason
+		if finishReason != nil {
+			data, _ := json.Marshal(map[string]string{"finish_reason": *finishReason})
+			_, err := fmt.Fprintf(w, "data: %s\n\n", data)
+			if err != nil {
+				return err
+			}
+		}
+
+		flusher.Flush()
+		return nil
+	}
+
+	// Stream the response
+	err := client.StreamChatCompletion("meta-llama/llama-3.1-8b-instruct:free", messages, streamHandler)
+	if err != nil {
+		// Send error as an event
+		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
+		fmt.Fprintf(w, "data: %s\n\n", errData)
+		flusher.Flush()
+	}
+
+	// Send DONE event
+	fmt.Fprint(w, "data: [DONE]\n\n")
+	flusher.Flush()
 }
