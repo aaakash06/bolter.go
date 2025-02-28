@@ -41,7 +41,7 @@ func initializeRoutes(r *mux.Router) {
 	// Create a subrouter for /api
 	api := r.PathPrefix("/api").Subrouter()
 
-	api.HandleFunc("/template", handlers.TemplateHandler).Methods("GET")
+	api.HandleFunc("/template", handlers.TemplateHandler).Methods("POST")
 	api.HandleFunc("/chat", handlers.Chat).Methods("GET")
 
 	api.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {

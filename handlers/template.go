@@ -4,6 +4,7 @@ import (
 	"bolter/utils"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -14,13 +15,35 @@ type Response struct {
 }
 
 func TemplateHandler(w http.ResponseWriter, r *http.Request) {
+	// extract the body from the request
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(Response{
+			Error: err.Error(),
+		})
+		// http.Error(w, "Error reading request body", http.StatusBadRequest)
+		return
+	}
+
+	// defer the closing of the body
+	defer r.Body.Close()
+
+	var data map[string]interface{}
+	// convert the json to struct
+	if err := json.Unmarshal(body, &data); err != nil {
+		http.Error(w, "Error parsing request body", http.StatusBadRequest)
+		return
+	}
+
 	// Get the singleton client
 	client := utils.GetOpenRouterClient()
 
 	// Create messages
 	messages := []utils.Message{
 		utils.SystemMessage("Return either node or react based on what do you think this project should be. Only return a single word either 'node' or 'react'. Do not return anything extra."),
-		utils.UserMessage("create me a beautiful todo app"),
+		utils.UserMessage(data["message"].(string)),
 	}
 
 	// Call the API
