@@ -32,7 +32,6 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// defer the closing of the body
 	defer r.Body.Close()
-
 	var data map[string]interface{}
 	// convert the json to struct
 	if err := json.Unmarshal(body, &data); err != nil {
@@ -59,7 +58,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(Response{
+		json.NewEncoder(w).Encode(ErrorResponse{
 			Error: err.Error(),
 		})
 		return
@@ -70,11 +69,18 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if len(resp.Choices) > 0 {
-		json.NewEncoder(w).Encode(Response{
-			Message: resp.Choices[0].Message.Content,
-		})
+		tech := resp.Choices[0].Message.Content
+		if tech == "react" {
+			json.NewEncoder(w).Encode(Response{
+				Prompts:   []string{utils.BasePrompt},
+				UiPrompts: []string{tech},
+			})
+		}
+		// else if(tech == "node") {
+
+		// }
 	} else {
-		json.NewEncoder(w).Encode(Response{
+		json.NewEncoder(w).Encode(ErrorResponse{
 			Error: "No response choices returned",
 		})
 	}
