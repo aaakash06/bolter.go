@@ -18,6 +18,7 @@ type ErrorResponse struct {
 }
 
 func TemplateHandler(w http.ResponseWriter, r *http.Request) {
+
 	// extract the body from the request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -32,7 +33,9 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// defer the closing of the body
 	defer r.Body.Close()
+
 	var data map[string]interface{}
+
 	// convert the json to struct
 	if err := json.Unmarshal(body, &data); err != nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -72,13 +75,15 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 		tech := resp.Choices[0].Message.Content
 		if tech == "react" {
 			json.NewEncoder(w).Encode(Response{
-				Prompts:   []string{utils.BasePrompt},
-				UiPrompts: []string{tech},
+				Prompts:   []string{utils.BasePrompt, utils.GetFSPrompt(tech)},
+				UiPrompts: []string{utils.GetTechStackPrompt(tech)},
+			})
+		} else if tech == "node" {
+			json.NewEncoder(w).Encode(Response{
+				Prompts:   []string{utils.GetFSPrompt(tech)},
+				UiPrompts: []string{utils.GetTechStackPrompt(tech)},
 			})
 		}
-		// else if(tech == "node") {
-
-		// }
 	} else {
 		json.NewEncoder(w).Encode(ErrorResponse{
 			Error: "No response choices returned",

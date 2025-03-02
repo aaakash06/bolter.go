@@ -386,3 +386,14 @@ createRoot(document.getElementById('root')!).render(
 );
 </boltAction><boltAction type="file" filePath="src/vite-env.d.ts">/// <reference types="vite/client" />
 </boltAction></boltArtifact>`
+
+func GetFSPrompt(stack string) string {
+	return `Here is an artifact that contains all files of the project visible to you.\nConsider the contents of ALL files in the project.\n\n` + GetTechStackPrompt(stack) + `\n\nHere is a list of files that exist on the file system but are not being shown to you:\n\n  - .gitignore\n  - package-lock.json\n`
+}
+
+func GetTechStackPrompt(stack string) string {
+	if strings.ToLower(stack) == "react" {
+		return ReactBasePrompt
+	}
+	return NodeBasePrompt
+}
