@@ -6,4 +6,5 @@
 	}
 
   println(utils.GetSystemPrompt(""))
+  println(string(body))
 ```
