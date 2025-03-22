@@ -2,13 +2,12 @@ package handlers
 
 import (
 	"bolter/utils"
-	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 
 	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
 )
 
 // Response is a simple structure for JSON responses
@@ -30,7 +29,7 @@ type ChatRequestBody struct {
 func Chat(w http.ResponseWriter, r *http.Request) {
 
 	// extract the body from the request
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -44,6 +43,7 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 	// defer the closing of the body
 	defer r.Body.Close()
 
+	// println(string(body))
 	var data ChatRequestBody
 
 	// convert the json to struct
@@ -56,13 +56,11 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		// http.Error(w, "Error parsing request body", http.StatusBadRequest)
 		return
 	}
-
-
 	
   // make api call
-	client := openai.NewClient(
-		option.WithAPIKey("OPENAI_API_KEY"), // defaults to os.LookupEnv("OPENAI_API_KEY")
-	)
+	// client := openai.NewClient(
+	// 	option.WithAPIKey(os.Getenv("OPENAI_API_KEY")),
+	// )
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{},
 		Model: openai.ChatModelGPT4o,
@@ -76,31 +74,39 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 			param.Messages = append(param.Messages, openai.AssistantMessage(message.Content))
 		}
 	}
-	chatCompletion, err := client.Chat.Completions.New(context.TODO(), param)
+	println(utils.GetSystemPrompt(""))
+	// write system prompt to a file
+	content := []byte(utils.GetSystemPrompt(""))
+	err = os.WriteFile("output.txt", content, 0644)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ChatErrorResponse{
-			Error: err.Error(),
-		})
-		return
+			panic(err)
 	}
-	println(chatCompletion.Choices[0].Message.Content)
 
-	// Return the response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	// chatCompletion, err := client.Chat.Completions.New(context.TODO(), param)
+	// if err != nil {
+	// 	w.Header().Set("Content-Type", "application/json")
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	json.NewEncoder(w).Encode(ChatErrorResponse{
+	// 		Error: err.Error(),
+	// 	})
+	// 	return
+	// }
+	// println(chatCompletion.Choices[0].Message.Content)
 
-	if len(chatCompletion.Choices) > 0 {
-		stepsXML := chatCompletion.Choices[0].Message.Content
-		json.NewEncoder(w).Encode(ChatResponse{
-			Steps: stepsXML,
-		})
-	} else {
-		json.NewEncoder(w).Encode(ChatErrorResponse{
-			Error: "No response choices returned",
-		})
-	}
+	// // Return the response
+	// w.Header().Set("Content-Type", "application/json")
+	// w.WriteHeader(http.StatusOK)
+
+	// if len(chatCompletion.Choices) > 0 {
+	// 	stepsXML := chatCompletion.Choices[0].Message.Content
+	// 	json.NewEncoder(w).Encode(ChatResponse{
+	// 		Steps: stepsXML,
+	// 	})
+	// } else {
+	// 	json.NewEncoder(w).Encode(ChatErrorResponse{
+	// 		Error: "No response choices returned",
+	// 	})
+	// }
 }
 // func Chat(w http.ResponseWriter, r *http.Request) {
 
