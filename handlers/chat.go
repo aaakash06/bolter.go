@@ -81,18 +81,10 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	if len(resp.Choices) > 0 {
-		tech := resp.Choices[0].Message.Content
-		if tech == "react" {
-			json.NewEncoder(w).Encode(Response{
-				Prompts:   []string{utils.BasePrompt, utils.GetFSPrompt(tech)},
-				UiPrompts: []string{utils.GetTechStackPrompt(tech)},
-			})
-		} else if tech == "node" {
-			json.NewEncoder(w).Encode(Response{
-				Prompts:   []string{utils.GetFSPrompt(tech)},
-				UiPrompts: []string{utils.GetTechStackPrompt(tech)},
-			})
-		}
+		stepsXML := resp.Choices[0].Message.Content
+		json.NewEncoder(w).Encode(ChatResponse{
+			Steps: stepsXML,
+		})
 	} else {
 		json.NewEncoder(w).Encode(ChatErrorResponse{
 			Error: "No response choices returned",
