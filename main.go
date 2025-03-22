@@ -42,7 +42,8 @@ func initializeRoutes(r *mux.Router) {
 	api := r.PathPrefix("/api").Subrouter()
 
 	api.HandleFunc("/template", handlers.TemplateHandler).Methods("POST")
-	api.HandleFunc("/chat", handlers.Chat).Methods("GET")
+	api.HandleFunc("/chat", handlers.Chat).Methods("POST")
+	api.HandleFunc("/stream", handlers.StreamingHandlerFunction).Methods("GET")
 
 	api.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

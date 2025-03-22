@@ -56,7 +56,7 @@ func StreamingHandlerFunction(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Stream the response
-	err := client.StreamChatCompletion("meta-llama/llama-3.1-8b-instruct:free", messages, streamHandler)
+	err := client.StreamChatCompletion("deepseek/deepseek-r1-zero:free", messages, streamHandler)
 	if err != nil {
 		// Send error as an event
 		errData, _ := json.Marshal(map[string]string{"error": err.Error()})
