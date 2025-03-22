@@ -5,12 +5,8 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
-
-	"context"
 
 	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
 )
 
 // Response is a simple structure for JSON responses
@@ -68,10 +64,10 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create client
-	client := openai.NewClient(
-		option.WithAPIKey(os.Getenv("OPENAI_API_KEY")),
-	)
+	// // create client
+	// client := openai.NewClient(
+	// 	option.WithAPIKey(os.Getenv("OPENAI_API_KEY")),
+	// )
 
 	// create params
 	param := openai.ChatCompletionNewParams{
@@ -88,33 +84,35 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// make api call
-	chatCompletion, err := client.Chat.Completions.New(context.TODO(), param)
-	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ChatErrorResponse{
-			Error: err.Error(),
-		})
-		return
-	}
+	json.NewEncoder(w).Encode(param)
 
-	// println(chatCompletion.Choices[0].Message.Content)
+	// // make api call
+	// chatCompletion, err := client.Chat.Completions.New(context.TODO(), param)
+	// if err != nil {
+	// 	w.Header().Set("Content-Type", "application/json")
+	// 	w.WriteHeader(http.StatusInternalServerError)
+	// 	json.NewEncoder(w).Encode(ChatErrorResponse{
+	// 		Error: err.Error(),
+	// 	})
+	// 	return
+	// }
 
-	// Return the response
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	// // println(chatCompletion.Choices[0].Message.Content)
 
-	if len(chatCompletion.Choices) > 0 {
-		stepsXML := chatCompletion.Choices[0].Message.Content
-		json.NewEncoder(w).Encode(ChatResponse{
-			Steps: stepsXML,
-		})
-	} else {
-		json.NewEncoder(w).Encode(ChatErrorResponse{
-			Error: "No response choices returned",
-		})
-	}
+	// // Return the response
+	// w.Header().Set("Content-Type", "application/json")
+	// w.WriteHeader(http.StatusOK)
+
+	// if len(chatCompletion.Choices) > 0 {
+	// 	stepsXML := chatCompletion.Choices[0].Message.Content
+	// 	json.NewEncoder(w).Encode(ChatResponse{
+	// 		Steps: stepsXML,
+	// 	})
+	// } else {
+	// 	json.NewEncoder(w).Encode(ChatErrorResponse{
+	// 		Error: "No response choices returned",
+	// 	})
+	// }
 }
 // func Chat(w http.ResponseWriter, r *http.Request) {
 
