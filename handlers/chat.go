@@ -66,10 +66,15 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 	param := openai.ChatCompletionNewParams{
 		Messages: []openai.ChatCompletionMessageParamUnion{},
 		Model: openai.ChatModelGPT4o,
+		MaxCompletionTokens: openai.Int(1000),
 	}
 	param.Messages = append(param.Messages, openai.SystemMessage(utils.GetSystemPrompt("")))
 	for _, message := range data.Messages {
-		param.Messages = append(param.Messages, openai.UserMessage(message.Content))
+		if message.Role == "user" {
+			param.Messages = append(param.Messages, openai.UserMessage(message.Content))
+		} else {
+			param.Messages = append(param.Messages, openai.AssistantMessage(message.Content))
+		}
 	}
 	chatCompletion, err := client.Chat.Completions.New(context.TODO(), param)
 	if err != nil {
