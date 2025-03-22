@@ -8,12 +8,12 @@ import (
 )
 
 // Response is a simple structure for JSON responses
-type Response struct {
+type TemplateResponse struct {
 	Prompts   []string `json:"promts"`
 	UiPrompts []string `json:"uiPrompts"`
 }
 
-type ErrorResponse struct {
+type TemplateErrorResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
@@ -24,7 +24,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{
+		json.NewEncoder(w).Encode(TemplateErrorResponse{
 			Error: err.Error(),
 		})
 		// http.Error(w, "Error reading request body", http.StatusBadRequest)
@@ -40,7 +40,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	if err := json.Unmarshal(body, &data); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{
+		json.NewEncoder(w).Encode(TemplateErrorResponse{
 			Error: err.Error(),
 		})
 		// http.Error(w, "Error parsing request body", http.StatusBadRequest)
@@ -61,7 +61,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{
+		json.NewEncoder(w).Encode(TemplateErrorResponse{
 			Error: err.Error(),
 		})
 		return
@@ -74,18 +74,18 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	if len(resp.Choices) > 0 {
 		tech := resp.Choices[0].Message.Content
 		if tech == "react" {
-			json.NewEncoder(w).Encode(Response{
+			json.NewEncoder(w).Encode(TemplateResponse{
 				Prompts:   []string{utils.BasePrompt, utils.GetFSPrompt(tech)},
 				UiPrompts: []string{utils.GetTechStackPrompt(tech)},
 			})
 		} else if tech == "node" {
-			json.NewEncoder(w).Encode(Response{
+			json.NewEncoder(w).Encode(TemplateResponse{
 				Prompts:   []string{utils.GetFSPrompt(tech)},
 				UiPrompts: []string{utils.GetTechStackPrompt(tech)},
 			})
 		}
 	} else {
-		json.NewEncoder(w).Encode(ErrorResponse{
+		json.NewEncoder(w).Encode(TemplateErrorResponse{
 			Error: "No response choices returned",
 		})
 	}

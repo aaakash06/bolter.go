@@ -399,5 +399,3 @@ func GetTechStackPrompt(stack string) string {
 	}
 	return NodeBasePrompt
 }
-
-const 
