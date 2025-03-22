@@ -1,2 +1,2 @@
-1) use of CaMal case 
-2) if else indentation
+1) map[string]interface - here interface referes to type any
+2) 

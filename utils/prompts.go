@@ -209,7 +209,9 @@ console.log(` + "```" + `Hello Node.js v${process.versions.node}!` + "```" + `);
 }
 </boltAction></boltArtifact>`
 
-const ReactBasePrompt = `<boltArtifact id="project-import" title="Project Files"><boltAction type="file" filePath="eslint.config.js">import js from '@eslint/js';
+const ReactBasePrompt = `
+<boltArtifact id="project-import" title="Project Files"><boltAction type="file" filePath="eslint.config.js">
+import js from '@eslint/js';
 import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
@@ -397,3 +399,5 @@ func GetTechStackPrompt(stack string) string {
 	}
 	return NodeBasePrompt
 }
+
+const 
