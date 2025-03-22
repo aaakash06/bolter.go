@@ -2,30 +2,17 @@ package handlers
 
 import (
 	"bolter/utils"
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
+
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 )
 
-// Response is a simple structure for JSON responses
-type ChatResponse struct {
-	Steps string `json:"steps"`
-}
-
-type ChatErrorResponse struct {
-	Error string `json:"error,omitempty"`
-}
-
-type ChatRequestBody struct {
-	Messages []struct {
-		Role    string `json:"role"`
-		Content string `json:"content"`
-	} `json:"messages"`
-}
-
-
-func Chat(w http.ResponseWriter, r *http.Request) {
-
+func OpenAIChat(w http.ResponseWriter, r *http.Request) {
 	// extract the body from the request
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -34,8 +21,10 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(ChatErrorResponse{
 			Error: err.Error(),
 		})
+		// http.Error(w, "Error reading request body", http.StatusBadRequest)
 		return
 	}
+
 	// defer the closing of the body
 	defer r.Body.Close()
 
@@ -62,20 +51,30 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get the singleton client
-	client := utils.GetOpenRouterClient()
+	// create client
+	client := openai.NewClient(
+		option.WithAPIKey(os.Getenv("OPENAI_API_KEY")),
+	)
 
-	// Create messages
-	messages := []utils.Message{
-		utils.SystemMessage(utils.GetSystemPrompt("")),
+	// create params
+	param := openai.ChatCompletionNewParams{
+		Messages: []openai.ChatCompletionMessageParamUnion{},
+		Model: openai.ChatModelGPT4o,
+		MaxCompletionTokens: openai.Int(1000),
 	}
-
+	param.Messages = append(param.Messages, openai.SystemMessage(utils.GetSystemPrompt("")))
 	for _, message := range data.Messages {
-		messages = append(messages, message)
+		if message.Role == "user" {
+			param.Messages = append(param.Messages, openai.UserMessage(message.Content))
+		} else {
+			param.Messages = append(param.Messages, openai.AssistantMessage(message.Content))
+		}
 	}
 
-	// Call the API
-	resp, err := client.ChatCompletion("deepseek/deepseek-r1-zero:free", messages)
+	// json.NewEncoder(w).Encode(param)
+
+	// // make api call
+	chatCompletion, err := client.Chat.Completions.New(context.TODO(), param)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,12 +84,14 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Return the response
+	// // println(chatCompletion.Choices[0].Message.Content)
+
+	// // Return the response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	if len(resp.Choices) > 0 {
-		stepsXML := resp.Choices[0].Message.Content
+	if len(chatCompletion.Choices) > 0 {
+		stepsXML := chatCompletion.Choices[0].Message.Content
 		json.NewEncoder(w).Encode(ChatResponse{
 			Steps: stepsXML,
 		})
@@ -100,4 +101,3 @@ func Chat(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 }
-
