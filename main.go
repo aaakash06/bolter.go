@@ -31,7 +31,7 @@ func main() {
 
 	// Start server
 	log.Printf("Server starting on port 8080...")
-	if err := http.ListenAndServe(":8080", r); err != nil {
+	if err := http.ListenAndServe(":8080", middleware.CORSMiddleware(r)); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 

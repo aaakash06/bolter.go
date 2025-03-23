@@ -3,7 +3,7 @@ package handlers
 import (
 	"bolter/utils"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 )
 
@@ -17,10 +17,14 @@ type TemplateErrorResponse struct {
 	Error string `json:"error,omitempty"`
 }
 
+type TemplateRequestBody struct {
+	Prompt string `json:"prompt"`
+}
+
 func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// extract the body from the request
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -34,7 +38,8 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	// defer the closing of the body
 	defer r.Body.Close()
 
-	var data map[string]interface{}
+	var data TemplateRequestBody
+	// var data map[string]interface{}
 
 	// convert the json to struct
 	if err := json.Unmarshal(body, &data); err != nil {
@@ -53,7 +58,7 @@ func TemplateHandler(w http.ResponseWriter, r *http.Request) {
 	// Create messages
 	messages := []utils.Message{
 		utils.SystemMessage("Return either node or react based on what do you think this project should be. Only return a single word either 'node' or 'react'. Do not return anything extra."),
-		utils.UserMessage(data["message"].(string)),
+		utils.UserMessage(data.Prompt),
 	}
 
 	// Call the API
